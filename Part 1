@@ -1,0 +1,133 @@
+```{r}
+#Import data
+EG_data <- read.table("Downloads/EG.dat", sep = ' ',header = T)
+#Count the number of alive, malformed and dead for each litter
+library(magrittr)
+library(dplyr)
+normal <- EG_data %>% count(id, response) %>% filter(response == 1) # count normal in each clusters
+malformed <- EG_data %>% count(id, response) %>% filter(response == 2) # count malformed in each clusters
+dead <-  EG_data %>% count(id, response) %>% filter(response == 3) # count dead in each clusters
+dose <- EG_data %>% count(id, dose)
+normal
+dose
+```
+
+```{r}
+#Merge the data, remove columns, remane and substitute the NA values with 0 values
+data1 <- merge(dose, normal[, -c(2)], by = 'id', all.x = T)
+data1 <- merge(data1, malformed[, -c(2)], by = 'id', all.x = T)
+data1<- merge(data1, dead[, -c(2)], by = 'id', all.x = T)
+colnames(data1) <- c('id', 'dose', 'size','normal', 'malformed', 'dead')
+data1[is.na(data1)] <- 0
+EG <- data1
+EG
+```
+
+# 1. Binary malformation indicator for a normal response against a malformed or dead response
+```{r}
+EG_data$dose<- as.numeric(EG_data$dose)
+EG_data$outcome <- EG_data$response
+EG_data$outcome[EG_data$response == 2] <- 0
+EG_data$outcome[EG_data$response == 3] <- 0
+as.factor(EG_data$outcome)
+```
+
+```{r}
+# Normal logistic regression
+mfit1.1 <- glm(formula = outcome ~ dose, family = binomial, data = EG_data)
+summary(mfit1.1)
+```
+```{r}
+dose.dat <- data.frame(dose = c(0, 0.75, 1.5, 3.0))
+probabilities <- mfit1.1 %>% predict(dose.dat, type = "response")
+probabilities
+```
+```{r}
+predicted.classes <- ifelse(probabilities > 0.5, "pos", "neg")
+predicted.classes
+```
+#visualization 
+```{r}
+EG_data %>%
+  ggplot(aes(dose, outcome)) +
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial")) +
+  labs(
+    title = "Logistic Regression Model", 
+    x = "Ethylene glycol dose g/kg",
+    y = "Probability of being normal"
+      )
+```
+```{r}
+#Multinomial model (same)
+library(nnet)
+mfit1.2<- multinom(outcome ~ dose, EG_data)
+summary(mfit1.2)
+```
+
+```{r}
+EG_data$normal <- ifelse(EG_data$response == 1, 1, 0)
+EG_data$abnormal <- ifelse(EG_data$response == 1, 0, 1)
+EG_data$malformed <- ifelse(EG_data$response == 2, 1, 0)
+EG_data$dead <- ifelse(EG_data$response == 3, 1, 0)
+```
+
+```{r}
+#Multinomial model (same)
+library(VGAM)
+mfit1.3=vglm(cbind(normal, abnormal) ~ dose, multinomial, EG_data)
+summary(mfit1.3)
+```
+
+```{r}
+# Quasi-likelihood logistic regression (Dispersion parameter)
+quasifit=glm(cbind(normal,size-normal) ~ dose, family=quasibinomial(link="logit"), data = EG)
+summary(quasifit)
+```
+
+```{r}
+# Generalized estimating equations 
+library(gee)
+geefitind = gee(outcome ~ dose, family = binomial(link="logit"), id = id, corstr="independence", data = EG_data)
+summary(geefitind)
+geefitexch = gee(outcome ~ dose, family = binomial(link="logit"), id = id, corstr="exchangeable", data = EG_data)
+summary(geefitexch)
+```
+
+```{r}
+# Generalized estimating equations
+library(aod)
+bbfit = betabin(cbind(normal, size - normal) ~ dose, ~1, data = EG)
+summary(bbfit)
+```
+
+```{r}
+# Full likelihood
+library(gamlss)
+bbfitn = gamlss(cbind(normal, size - normal) ~ dose, sigma.formula=~1, family=BB, data = EG)
+summary(bbfitn)
+# rhohat=exp(logsigmahat)/(exp(logsigmahat)+1)1)
+# sigma = rho/(1-rho) or rho = sigma/(sigma+1)
+logsigmahat = bbfitn$sigma.coefficients
+rhohat = exp(logsigmahat)/(exp(logsigmahat) + 1)
+rhohat
+```
+
+```{r}
+# GLMM
+#logistic-normal model
+library(lme4)
+#default is Laplacian approximation nAGQ=1
+glmmfit1 <- glmer(cbind(normal, size - normal) ~ dose + (1|id), family = binomial(link="logit"), data = EG)
+summary(glmmfit1)
+#alternative data structure
+gm1 <- glmer(outcome ~ dose + (1|id), family = binomial(link="logit"), data = EG_data)
+summary(gm1)
+# using penalized-quasi likelihood PQL approximation
+library(mgcv)
+glmmfit <- gamm(outcome ~ dose, family=binomial(link="logit"), random = list(id = ~1), data = EG_data)
+summary(glmmfit$gam)
+# using Adaptive Gauss-Hermite Quadrature approximation to the log-likelihood
+glmmfit2 <- glmer(cbind(normal, size - normal) ~ dose + (1|id), family = binomial(link="logit"), nAGQ = 2000, data = EG)
+summary(glmmfit2)
+```
