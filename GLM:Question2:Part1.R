@@ -38,3 +38,15 @@ summary(fit1)
 fit2 = vglm(cbind(alive, malformed, dead)~dose, propodds(reverse = F), EG)
 summary(fit2)
 install.packages("VGLM")
+
+
+# Ordered Multivariate GEE
+library(geepack)
+
+# Independence working assumption
+model_ind <- ordgee(ordered(response) ~ dose, data = EG_data, mean.link = 'logit', id = id, corstr = "independence")
+summary(model_ind)
+
+# Echangeable working assumption 
+model_exch <- ordgee(ordered(response) ~ dose, data = EG_data, mean.link = 'logit', id = id, corstr = "exchangeable")
+summary(model_exch)
