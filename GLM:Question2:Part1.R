@@ -40,7 +40,20 @@ summary(fit2)
 install.packages("VGLM")
 
 
+
+
+
 # Ordered Multivariate GEE
+
+## with multgee
+library(multgee)
+#fit the Multivariate extension of GEE with independence working assumption --> not clustering then 
+PO.gee.ind <- ordLORgee(response ~ as.factor(dose), data = EG_data, id = id, LORstr = 'independence', link = 'logit')
+summary(PO.gee.ind) 
+#Fit the MUltivariate extension of the GEE with the exchangable working assumption --> all littermates with the same correlation: why should it be different?
+PO.gee.exch <- ordLORgee(response ~ as.factor(dose), data = EG_data, id = id, LORstr = 'category.exch', link = 'logit', bstart = c(1, 1, 1))  #this part does not work 
+
+## with geepack --> different resutls? 
 library(geepack)
 
 # Independence working assumption
