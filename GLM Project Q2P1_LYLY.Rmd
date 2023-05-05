@@ -1,0 +1,90 @@
+---
+title: "GLM project part 2"
+author: "Lynda"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Dependent variable: Categorical “Normal”(Y)
+Independent variable: Categorical “Malformed” and “Dead (X)
+
+
+## GLM (Baseline and Adjacent model for Question 2)
+
+```{r}
+EG_data <- read.table(file='C:/Users/Lenovo/OneDrive/Documents/Msc. Epidemiology/Hasselt University (Quantitative Epidemiology)/First Year/Semester 2/Generalized Linear Models/Homework ass + syllabus (Part 2)/Project/EG.dat', header=TRUE, sep = "")
+
+EG_data
+```
+
+```{r}
+#Count the number of normal, malformed and dead for each litter
+library(dplyr)
+library(magrittr)
+normal <- EG_data %>% count(id, response) %>% filter(response == 1) # all normal in each clusters
+malformed <- EG_data %>% count(id, response) %>% filter(response == 2)
+dead <-  EG_data %>% count(id, response) %>% filter(response == 3)
+dose <- EG_data %>% count(id, dose)
+
+```
+
+```{r}
+#Merge the data, remove columns, rename and substitute the NA values with 0 values
+data1 <- merge(dose, normal[, -c(2)], by = 'id', all.x = T)
+data1 <- merge(data1, malformed[, -c(2)], by = 'id', all.x = T)
+data1<- merge(data1, dead[, -c(2)], by = 'id', all.x = T)
+colnames(data1) <- c('id', 'dose', 'size','normal', 'malformed', 'dead')
+
+data1[is.na(data1)] <- 0
+
+EG <- data1
+
+```
+
+
+
+
+
+## Baseline Model
+
+```{r}
+library(VGAM)
+EG_Base=vglm(cbind(normal,malformed,dead)~dose,multinomial(refLevel=1),EG)
+summary(EG_Base_2)
+```
+## Likelihood ratio test
+```{r}
+LRT_Base=2*(logLik(EG_Base))
+c(LRT_Base,1-pchisq(LRT_Base,3))
+```
+
+
+## Adjacent Model
+
+### Common slopes
+```{r}
+adj_EG1=vglm(cbind(normal,malformed,dead)~dose,acat,EG)
+summary(adj_EG1)
+```
+### Likelihood Ratio Test
+
+```{r}
+LRT_Adj=LRT_Adj=2*(logLik(adj_EG1))
+c(LRT_Adj,1-pchisq(LRT_Adj,3))
+```
+
+### No Common slopes
+```{r}
+adj_EG1_CS=vglm(cbind(normal,malformed,dead)~dose,acat(parallel=TRUE),EG)
+summary(adj_EG1_CS)
+```
+### Likelihood Ratio Test with CS
+
+```{r}
+LRT_Adj_CS=LRT_Adj_CS=2*(logLik(adj_EG1_CS))
+c(LRT_Adj_CS,1-pchisq(LRT_Adj_CS,3))
+```
