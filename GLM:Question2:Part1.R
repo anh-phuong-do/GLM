@@ -51,7 +51,9 @@ library(multgee)
 PO.gee.ind <- ordLORgee(response ~ as.factor(dose), data = EG_data, id = id, LORstr = 'independence', link = 'logit')
 summary(PO.gee.ind) 
 #Fit the MUltivariate extension of the GEE with the exchangable working assumption --> all littermates with the same correlation: why should it be different?
-PO.gee.exch <- ordLORgee(response ~ as.factor(dose), data = EG_data, id = id, LORstr = 'category.exch', link = 'logit', bstart = c(1, 1, 1))  #this part does not work 
+PO.gee.unif <- ordLORgee((response) ~ as.factor(dose), data = EG_data, id = id, LORstr = 'uniform', link = 'logit')
+summary(PO.gee.unif)
+
 
 ## with geepack --> different resutls? 
 library(geepack)
@@ -62,4 +64,4 @@ summary(model_ind)
 
 # Echangeable working assumption 
 model_exch <- ordgee(ordered(response) ~ dose, data = EG_data, mean.link = 'logit', id = id, corstr = "exchangeable")
-summary(model_exch)
+summary(model_exch) #if dose put as factor then NaN in the analysis --> too much complicated variance structure??
