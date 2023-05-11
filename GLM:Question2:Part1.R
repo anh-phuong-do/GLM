@@ -54,8 +54,15 @@ summary(PO.gee.ind)
 PO.gee.unif <- ordLORgee((response) ~ as.factor(dose), data = EG_data, id = id, LORstr = 'uniform', link = 'logit')
 summary(PO.gee.unif)
 
+##QIC tets for GEE --> different objects needed 
+library(MuMIn)
+QIC(PO.gee.unif) #QIC based on independence assumption comaprison --> a fitted model object of class "gee", "geepack", "geem", "wgee", or "yags".
 
-## with geepack --> different resutls? 
+library(wgeesel)
+QIC.gee(PO.gee.unif) #no., it needs a wgee model 
+
+
+## with geepack --> different resutls? --> DO NOT USE GEEPACK 
 library(geepack)
 
 # Independence working assumption
@@ -65,3 +72,19 @@ summary(model_ind)
 # Echangeable working assumption 
 model_exch <- ordgee(ordered(response) ~ dose, data = EG_data, mean.link = 'logit', id = id, corstr = "exchangeable")
 summary(model_exch) #if dose put as factor then NaN in the analysis --> too much complicated variance structure??
+
+
+
+# Ordered Multivariate GLMM 
+
+## 'No linear' dose effect 
+EG_GLMM <- clmm(ordered(response) ~ as.factor(dose) + (1|id), link = 'logit', data = EG_data)
+summary(EG_GLMM)
+
+## 'Linear' dose effect 
+Equ_GLMM <- clmm(ordered(response) ~ dose + (1|id), data = EG_data, link = 'logit')
+summary(Equ_GLMM)
+
+## LIkelihood ratio test --> dof = 2 (2 parms in reduced, 4 in full)
+LRT.GLMM <- 2*(EG_GLMM$logLik - Equ_GLMM$logLik)
+c(LRT.GLMM, 1 - pchisq(LRT.GLMM, 2)) #H0: linear increase due to dose  H1: not linear increase --> significant 
