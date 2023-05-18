@@ -47,28 +47,28 @@ install.packages("VGLM")
 
 ## with multgee
 library(multgee)
+
 #fit the Multivariate extension of GEE with independence working assumption --> not clustering then 
-PO.gee.ind <- ordLORgee(response ~ as.factor(dose), data = EG_data, id = id, LORstr = 'independence', link = 'logit')
+PO.gee.ind <- ordLORgee(response ~ dose, data = EG_data, id = id, LORstr = 'independence', link = 'logit')
 summary(PO.gee.ind) 
+
 #Fit the MUltivariate extension of the GEE with the exchangable working assumption --> all littermates with the same correlation: why should it be different?
-PO.gee.unif <- ordLORgee((response) ~ as.factor(dose), data = EG_data, id = id, LORstr = 'uniform', link = 'logit')
+PO.gee.unif <- ordLORgee((response) ~ dose, data = EG_data, id = id, LORstr = 'uniform', link = 'logit') #dose is not as.factor sicne we are working with PO assumption. With QIC we should check but idk how to do QIC
 summary(PO.gee.unif)
+
 
 ##QIC tets for GEE --> different objects needed 
 library(MuMIn)
 QIC(PO.gee.unif) #QIC based on independence assumption comaprison --> a fitted model object of class "gee", "geepack", "geem", "wgee", or "yags".
-
 library(wgeesel)
 QIC.gee(PO.gee.unif) #no., it needs a wgee model 
 
 
 ## with geepack --> different resutls? --> DO NOT USE GEEPACK 
 library(geepack)
-
 # Independence working assumption
 model_ind <- ordgee(ordered(response) ~ dose, data = EG_data, mean.link = 'logit', id = id, corstr = "independence")
 summary(model_ind)
-
 # Echangeable working assumption 
 model_exch <- ordgee(ordered(response) ~ dose, data = EG_data, mean.link = 'logit', id = id, corstr = "exchangeable")
 summary(model_exch) #if dose put as factor then NaN in the analysis --> too much complicated variance structure??
