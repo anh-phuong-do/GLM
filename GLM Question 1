@@ -1,6 +1,14 @@
+---
+title: "GLM"
+author: "Thanh Chuong Cao"
+date: "5/4/2023"
+output: html_document
+---
+
 ```{r}
 #Import data
-EG_data <- read.table("Downloads/EG.dat", sep = ' ',header = T)
+setwd("/Users/dr.thanhchuong/Documents/GLM")
+EG_data <- read.table("EG.dat", sep = ' ',header = T)
 #Count the number of normal, malformed and dead for each litter
 library(magrittr)
 library(dplyr)
@@ -34,19 +42,21 @@ EG_data$outcome <- as.factor(EG_data$outcome)
 ```
 
 ```{r}
-# GML is same for baseline, adjacent, constinuous and proportional odds
+# GML is same for baseline, adjacent, continuous and proportional odds
 mfit1.1 <- glm(formula = outcome ~ dose, family = binomial, data = EG_data)
 summary(mfit1.1)
+-2*logLik(mfit1.1)
+BIC(mfit1.1)
 ```
 
 ```{r}
-dose.dat <- data.frame(dose = c(0, 0.75, 1.5, 3.0))
-probabilities <- mfit1.1 %>% predict(dose.dat, type = "response")
-probabilities
+#dose.dat <- data.frame(dose = c(0, 0.75, 1.5, 3.0))
+#probabilities <- mfit1.1 %>% predict(dose.dat, type = "response")
+#probabilities
 ```
 ```{r}
-predicted.classes <- ifelse(probabilities > 0.5, "pos", "neg")
-predicted.classes
+#predicted.classes <- ifelse(probabilities > 0.5, "pos", "neg")
+#predicted.classes
 ```
 
 ```{r}
@@ -54,7 +64,7 @@ predicted.classes
 EG$dose <- as.numeric(EG$dose)
 mfit1.2 <- glm(formula = cbind(normal, size - normal) ~ dose, family = quasibinomial(link = "logit"), data = EG)
 summary(mfit1.2)
-glm(formula = cbind(normal, size - normal) ~ dose, family = binomial(link = "logit"), data = EG)
+#qic
 ```
 
 
@@ -62,10 +72,13 @@ glm(formula = cbind(normal, size - normal) ~ dose, family = binomial(link = "log
 ```{r}
 # Generalized estimating equations 
 library(gee)
+library(MuMIn)
 geefitind = gee(outcome ~ dose, family = binomial(link="logit"), id = id, corstr="independence", data = EG_data)
 summary(geefitind)
 geefitexch = gee(outcome ~ dose, family = binomial(link="logit"), id = id, corstr="exchangeable", data = EG_data)
 summary(geefitexch)
+QIC(geefitind)
+QIC(geefitexch)
 ```
 
 ```{r}
@@ -73,6 +86,9 @@ summary(geefitexch)
 library(aod)
 bbfit = betabin(cbind(normal, size - normal) ~ dose, ~1, data = EG)
 summary(bbfit)
+-2*logLik(bbfit)
+AIC(bbfit)
+BIC(bbfit)
 ```
 
 
