@@ -32,23 +32,45 @@ EG <- data1
 # Continuation ratio model
 #install.packages("VGAM")
 library(VGAM)
+# with common slope
   fit1 = vglm(cbind(normal, malformed, dead)~dose, cratio(parallel = TRUE), EG)
   summary(fit1)
   summary(resid(fit1, type = "pearson"))
-
+# Loglikelihood
+  -2*logLik(fit1)
 # Model fit statistics
   AIC(fit1)
   BIC(fit1)
 # Score and Wald test
   score.stat(fit1)
   wald.stat(fit1)
+#with different slope
+  fit1.2 = vglm(cbind(normal, malformed, dead)~dose, cratio(parallel = FALSE), EG)
+  summary(fit1.2)
+  summary(resid(fit1.2, type = "pearson"))
+  # Loglikelihood
+  -2*logLik(fit1.2)
+  # Model fit statistics
+  AIC(fit1.2)
+  BIC(fit1.2)
+  # Score and Wald test
+  score.stat(fit1.2)
+  wald.stat(fit1.2)
+  
   
 # proportional odd model
-<<<<<<< Updated upstream
-fit2 = vglm(cbind(alive, malformed, dead)~dose, propodds(reverse = F), EG)
-summary(fit2)
-install.packages("VGLM")
+  fit2 = vglm(cbind(normal, malformed, dead)~dose, propodds(reverse = F), EG)
+  summary(fit2)
 
+# Loglikelihood
+  -2*logLik(fit2)
+
+# Model fit statistics
+  AIC(fit2)
+  BIC(fit2)
+# Score and Wald test
+  score.stat(fit2)
+  wald.stat(fit2)  
 
 
 
@@ -96,17 +118,8 @@ Equ_GLMM <- clmm(ordered(response) ~ dose + (1|id), data = EG_data, link = 'logi
 summary(Equ_GLMM)
 
 ## LIkelihood ratio test --> dof = 2 (2 parms in reduced, 4 in full)
-LRT.GLMM <- 2*(EG_GLMM$logLik - Equ_GLMM$logLik)
-c(LRT.GLMM, 1 - pchisq(LRT.GLMM, 2)) #H0: linear increase due to dose  H1: not linear increase --> significant 
-=======
+  LRT.GLMM <- 2*(EG_GLMM$logLik - Equ_GLMM$logLik)
+  c(LRT.GLMM, 1 - pchisq(LRT.GLMM, 2)) #H0: linear increase due to dose  H1: not linear increase --> significant 
   fit2 = vglm(cbind(normal,malformed, dead)~dose, propodds(reverse = F), EG)
   summary(fit2)
-# Model fit statistics
-  AIC(fit2)
-  BIC(fit2)
-  # Score and Wald test
-  score.stat(fit2)
-  wald.stat(fit2)  
-  
 
->>>>>>> Stashed changes
