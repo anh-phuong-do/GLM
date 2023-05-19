@@ -42,66 +42,113 @@ EG_data$outcome <- as.factor(EG_data$outcome)
 ```
 
 ```{r}
-# GML is same for baseline, adjacent, continuous and proportional odds
-mfit1.1 <- glm(formula = outcome ~ dose, family = binomial, data = EG_data)
-summary(mfit1.1)
--2*logLik(mfit1.1)
-BIC(mfit1.1)
+# GLM is same for baseline, adjacent, continuous and proportional odds
+# Dose as continuous variable
+mfit1 <- glm(formula = outcome ~ dose, family = binomial, data = EG_data)
+summary(mfit1)
+-2*logLik(mfit1)
+BIC(mfit1)
 ```
 
 ```{r}
-#dose.dat <- data.frame(dose = c(0, 0.75, 1.5, 3.0))
-#probabilities <- mfit1.1 %>% predict(dose.dat, type = "response")
-#probabilities
-```
-```{r}
-#predicted.classes <- ifelse(probabilities > 0.5, "pos", "neg")
-#predicted.classes
+# Dose as category variable
+EG_data$dosef<- as.factor(EG_data$dose)
+mfit2 <- glm(formula = outcome ~ dosef, family = binomial, data = EG_data)
+summary(mfit2)
+-2*logLik(mfit2)
+BIC(mfit2)
 ```
 
 ```{r}
-# Quasi-likelihood with inflated binomial inflation
+# Dose are dummies variables
+EG_data$dose1 <- as.numeric(EG_data$dose==0.75)
+EG_data$dose2 <- as.numeric(EG_data$dose==1.50)
+EG_data$dose3 <- as.numeric(EG_data$dose==3.00)
+mfit3 <- glm(formula = outcome ~ dose1 + dose2 + dose3, family = binomial, data = EG_data)
+summary(mfit3)
+-2*logLik(mfit3)
+BIC(mfit3)
+```
+
+
+```{r}
+# Quasi-likelihood with inflated binomial inflation with dose as continuous variable
 EG$dose <- as.numeric(EG$dose)
-mfit1.2 <- glm(formula = cbind(normal, size - normal) ~ dose, family = quasibinomial(link = "logit"), data = EG)
-summary(mfit1.2)
+mfitq1 <- glm(formula = cbind(normal, size - normal) ~ dose, family = quasibinomial(link = "logit"), data = EG)
+summary(mfitq1)
 #qic
 ```
 
+```{r}
+# Quasi-likelihood with inflated binomial inflation with dose as factor variable
+EG$dosef <- as.factor(EG$dose)
+mfitq2 <- glm(formula = cbind(normal, size - normal) ~ dosef, family = quasibinomial(link = "logit"), data = EG)
+summary(mfitq2)
+#qic
+```
+
+```{r}
+# Quasi-likelihood with beta-binomial type variance  with dose as continuous variable
+mfitq3 <- glm(formula = outcome ~ dose, family = quasi(link = "logit", variance = "mu(1-mu)"), data = EG_data)
+summary(mfitq3)
+# Quasi-likelihood with beta-binomial type variance  with dose as factor variable
+mfitq4 <- glm(formula = outcome ~ dosef, family = quasi(link = "logit", variance = "mu(1-mu)"), data = EG_data)
+summary(mfitq4)
+```
 
 
 ```{r}
 # Generalized estimating equations 
+# Independent structure
 library(gee)
 library(MuMIn)
-geefitind = gee(outcome ~ dose, family = binomial(link="logit"), id = id, corstr="independence", data = EG_data)
-summary(geefitind)
-geefitexch = gee(outcome ~ dose, family = binomial(link="logit"), id = id, corstr="exchangeable", data = EG_data)
-summary(geefitexch)
-QIC(geefitind)
-QIC(geefitexch)
+geefitind1 = gee(outcome ~ dose, family = binomial(link="logit"), id = id, corstr="independence", data = EG_data)
+summary(geefitind1)
+QIC(geefitind1)
+geefitind2 = gee(outcome ~ dosef, family = binomial(link="logit"), id = id, corstr="independence", data = EG_data)
+summary(geefitind2)
+QIC(geefitind2)
 ```
 
 ```{r}
-# Full likelihood
+# Exchangeable structure
+geefitexch1 = gee(outcome ~ dose, family = binomial(link="logit"), id = id, corstr="exchangeable", data = EG_data)
+summary(geefitexch1)
+QIC(geefitexch1)
+geefitexch2 = gee(outcome ~ dosef, family = binomial(link="logit"), id = id, corstr="exchangeable", data = EG_data)
+summary(geefitexch2)
+QIC(geefitexch2)
+```
+
+```{r}
+# Full likelihood with continuous variable
 library(aod)
-bbfit = betabin(cbind(normal, size - normal) ~ dose, ~1, data = EG)
-summary(bbfit)
--2*logLik(bbfit)
-AIC(bbfit)
-BIC(bbfit)
+bbfit1 = betabin(cbind(normal, size - normal) ~ dose, ~1, data = EG)
+summary(bbfit1)
+-2*logLik(bbfit1)
+AIC(bbfit1)
+BIC(bbfit1)
 ```
 
+```{r}
+# Full likelihood with factor variable
+bbfit2 = betabin(cbind(normal, size - normal) ~ dosef, ~1, data = EG)
+summary(bbfit2)
+-2*logLik(bbfit2)
+AIC(bbfit2)
+BIC(bbfit2)
+```
 
 ```{r}
 # Full likelihood
-library(gamlss)
-bbfitn = gamlss(cbind(normal, size - normal) ~ dose, sigma.formula=~1, family=BB, data = EG)
-summary(bbfitn)
+#library(gamlss)
+#bbfitn = gamlss(cbind(normal, size - normal) ~ dose, sigma.formula=~1, family=BB, data = EG)
+#summary(bbfitn)
 # rhohat=exp(logsigmahat)/(exp(logsigmahat)+1)1)
 # sigma = rho/(1-rho) or rho = sigma/(sigma+1)
-logsigmahat = bbfitn$sigma.coefficients
-rhohat = exp(logsigmahat)/(exp(logsigmahat) + 1)
-rhohat
+#logsigmahat = bbfitn$sigma.coefficients
+#rhohat = exp(logsigmahat)/(exp(logsigmahat) + 1)
+#rhohat
 ```
 
 
@@ -112,15 +159,24 @@ library(lme4)
 #default is Laplacian approximation nAGQ=1
 glmmfit1 <- glmer(cbind(normal, size - normal) ~ dose + (1|id), family = binomial(link="logit"), data = EG)
 summary(glmmfit1)
+glmmfit2 <- glmer(cbind(normal, size - normal) ~ dosef + (1|id), family = binomial(link="logit"), data = EG)
+summary(glmmfit2)
 #alternative data structure
 gm1 <- glmer(outcome ~ dose + (1|id), family = binomial(link="logit"), data = EG_data)
 summary(gm1)
+gm2 <- glmer(outcome ~ dosef + (1|id), family = binomial(link="logit"), data = EG_data)
+summary(gm2)
 # using penalized-quasi likelihood PQL approximation
 library(mgcv)
-glmmfit <- gamm(outcome ~ dose, family=binomial(link="logit"), random = list(id = ~ 1), data = EG_data)
-summary(glmmfit$gam)
+gamm1 <- gamm(outcome ~ dose, family=binomial(link="logit"), random = list(id = ~ 1), data = EG_data)
+summary(gamm1)
+gamm2 <- gamm(outcome ~ dosef, family=binomial(link="logit"), random = list(id = ~ 1), data = EG_data)
+summary(gamm2)
+
 # using Adaptive Gauss-Hermite Quadrature approximation to the log-likelihood
-# glmmfit2 <- glmer(cbind(normal, size - normal) ~ dose + (1|id), family = binomial(link="logit"), nAGQ = 2000, data = EG)
-# summary(glmmfit2)
+glmer1 <- glmer(cbind(normal, size - normal) ~ dose + (1|id), family = binomial(link="logit"), nAGQ = 2000, data = EG)
+summary(glmer1)
+glmer2 <- glmer(cbind(normal, size - normal) ~ dose + (1|id), family = binomial(link="logit"), nAGQ = 2000, data = EG)
+summary(glmer2)
 ```
 
