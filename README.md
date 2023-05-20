@@ -1,3 +1,3 @@
 # GLM
  GLM Project
-All models inside the GLM_Part1
+All models inside the GLM Question 1
