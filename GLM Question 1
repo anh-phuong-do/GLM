@@ -174,9 +174,9 @@ gamm2 <- gamm(outcome ~ dosef, family=binomial(link="logit"), random = list(id =
 summary(gamm2)
 
 # using Adaptive Gauss-Hermite Quadrature approximation to the log-likelihood
-glmer1 <- glmer(cbind(normal, size - normal) ~ dose + (1|id), family = binomial(link="logit"), nAGQ = 2000, data = EG)
+glmer1 <- glmer(cbind(normal, size - normal) ~ dose + (1|id), family = binomial(link="logit"), nAGQ = 100, data = EG)
 summary(glmer1)
-glmer2 <- glmer(cbind(normal, size - normal) ~ dose + (1|id), family = binomial(link="logit"), nAGQ = 2000, data = EG)
+glmer2 <- glmer(cbind(normal, size - normal) ~ dose + (1|id), family = binomial(link="logit"), nAGQ = 100, data = EG)
 summary(glmer2)
 ```
 
