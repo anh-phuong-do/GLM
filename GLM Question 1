@@ -5,6 +5,7 @@ date: "5/4/2023"
 output: html_document
 ---
 
+# Data preparation 
 ```{r}
 #Import data
 setwd("/Users/dr.thanhchuong/Documents/GLM")
@@ -30,6 +31,9 @@ data1[is.na(data1)] <- 0
 EG <- data1
 EG
 ```
+
+# Question 1
+## Unclustered 
 
 # 1. Binary malformation indicator for a normal response against a malformed or dead response
 ```{r}
@@ -69,7 +73,7 @@ summary(mfit3)
 -2*logLik(mfit3)
 BIC(mfit3)
 ```
-
+## CLustered 
 
 ```{r}
 # Quasi-likelihood with inflated binomial inflation with dose as continuous variable
@@ -179,4 +183,83 @@ summary(glmer1)
 glmer2 <- glmer(cbind(normal, size - normal) ~ dose + (1|id), family = binomial(link="logit"), nAGQ = 100, data = EG)
 summary(glmer2)
 ```
+
+# Question 2
+## Unclustered 
+
+## Baseline Model
+
+```{r}
+library(VGAM)
+EG_Base=vglm(cbind(normal,malformed,dead)~1,multinomial(refLevel=1),EG)
+summary(EG_Base)
+```
+## Likelihood ratio test
+```{r}
+LRT_Base=2*(logLik(EG_Base))
+c(LRT_Base,1-pchisq(LRT_Base,3))
+```
+
+### AIC and BIC
+
+```{r}
+AIC_Base<-AIC(EG_Base)
+AIC_Base
+```
+
+```{r}
+BIC_Base<-BIC(EG_Base)
+BIC_Base
+```
+
+
+## Adjacent Model
+
+### No Common slopes
+```{r}
+adj_EG1=vglm(cbind(normal,malformed,dead)~dose,acat,EG)
+summary(adj_EG1)
+```
+### Likelihood Ratio Test
+
+```{r}
+LRT_Adj=LRT_Adj=2*(logLik(adj_EG1))
+c(LRT_Adj,1-pchisq(LRT_Adj,3))
+```
+### AIC and BIC
+
+```{r}
+AIC_Adj_noCS<-AIC(adj_EG1)
+AIC_Adj_noCS
+```
+```{r}
+BIC_Adj_noCS<-BIC(adj_EG1)
+BIC_Adj_noCS
+```
+
+
+### Common slopes
+```{r}
+adj_EG1_CS=vglm(cbind(normal,malformed,dead)~dose,acat(parallel=TRUE),EG)
+summary(adj_EG1_CS)
+```
+### Likelihood Ratio Test with CS
+
+```{r}
+LRT_Adj_CS=LRT_Adj_CS=2*(logLik(adj_EG1_CS))
+c(LRT_Adj_CS,1-pchisq(LRT_Adj_CS,3))
+```
+
+### AIC and BIC
+
+```{r}
+AIC_Adj_CS<-AIC(adj_EG1_CS)
+AIC_Adj_CS
+```
+
+```{r}
+BIC_Adj_CS<-BIC(adj_EG1_CS)
+BIC_Adj_CS
+```
+
 
