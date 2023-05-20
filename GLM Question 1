@@ -6,7 +6,7 @@ output: html_document
 ---
 
 # Data preparation 
-```{r}
+
 #Import data
 setwd("/Users/dr.thanhchuong/Documents/GLM")
 EG_data <- read.table("EG.dat", sep = ' ',header = T)
@@ -19,9 +19,8 @@ dead <-  EG_data %>% count(id, response) %>% filter(response == 3) # count dead 
 dose <- EG_data %>% count(id, dose)
 normal
 dose
-```
 
-```{r}
+
 #Merge the data, remove columns, rename and substitute the NA values with 0 values
 data1 <- merge(dose, normal[, -c(2)], by = 'id', all.x = T)
 data1 <- merge(data1, malformed[, -c(2)], by = 'id', all.x = T)
@@ -30,40 +29,33 @@ colnames(data1) <- c('id', 'dose', 'size','normal', 'malformed', 'dead')
 data1[is.na(data1)] <- 0
 EG <- data1
 EG
-```
 
 # Question 1
 ## Unclustered 
 
 # 1. Binary malformation indicator for a normal response against a malformed or dead response
-```{r}
+
 # Transform in to binary outcome indicating normal
 EG_data$dose <- as.numeric(EG_data$dose)
 EG_data$outcome <- EG_data$response
 EG_data$outcome[EG_data$response == 2] <- 0
 EG_data$outcome[EG_data$response == 3] <- 0
 EG_data$outcome <- as.factor(EG_data$outcome) 
-```
 
-```{r}
 # GLM is same for baseline, adjacent, continuous and proportional odds
 # Dose as continuous variable
 mfit1 <- glm(formula = outcome ~ dose, family = binomial, data = EG_data)
 summary(mfit1)
 -2*logLik(mfit1)
 BIC(mfit1)
-```
 
-```{r}
 # Dose as category variable
 EG_data$dosef<- as.factor(EG_data$dose)
 mfit2 <- glm(formula = outcome ~ dosef, family = binomial, data = EG_data)
 summary(mfit2)
 -2*logLik(mfit2)
 BIC(mfit2)
-```
 
-```{r}
 # Dose are dummies variables
 EG_data$dose1 <- as.numeric(EG_data$dose==0.75)
 EG_data$dose2 <- as.numeric(EG_data$dose==1.50)
@@ -72,36 +64,31 @@ mfit3 <- glm(formula = outcome ~ dose1 + dose2 + dose3, family = binomial, data 
 summary(mfit3)
 -2*logLik(mfit3)
 BIC(mfit3)
-```
-## CLustered 
 
-```{r}
+## Clustered 
+
+
 # Quasi-likelihood with inflated binomial inflation with dose as continuous variable
 EG$dose <- as.numeric(EG$dose)
 mfitq1 <- glm(formula = cbind(normal, size - normal) ~ dose, family = quasibinomial(link = "logit"), data = EG)
 summary(mfitq1)
 #qic
-```
 
-```{r}
 # Quasi-likelihood with inflated binomial inflation with dose as factor variable
 EG$dosef <- as.factor(EG$dose)
 mfitq2 <- glm(formula = cbind(normal, size - normal) ~ dosef, family = quasibinomial(link = "logit"), data = EG)
 summary(mfitq2)
 #qic
-```
 
-```{r}
+
 # Quasi-likelihood with beta-binomial type variance  with dose as continuous variable
 mfitq3 <- glm(formula = outcome ~ dose, family = quasi(link = "logit", variance = "mu(1-mu)"), data = EG_data)
 summary(mfitq3)
 # Quasi-likelihood with beta-binomial type variance  with dose as factor variable
 mfitq4 <- glm(formula = outcome ~ dosef, family = quasi(link = "logit", variance = "mu(1-mu)"), data = EG_data)
 summary(mfitq4)
-```
 
 
-```{r}
 # Generalized estimating equations 
 # Independent structure
 library(gee)
@@ -112,9 +99,8 @@ QIC(geefitind1)
 geefitind2 = gee(outcome ~ dosef, family = binomial(link="logit"), id = id, corstr="independence", data = EG_data)
 summary(geefitind2)
 QIC(geefitind2)
-```
 
-```{r}
+
 # Exchangeable structure
 geefitexch1 = gee(outcome ~ dose, family = binomial(link="logit"), id = id, corstr="exchangeable", data = EG_data)
 summary(geefitexch1)
@@ -122,9 +108,7 @@ QIC(geefitexch1)
 geefitexch2 = gee(outcome ~ dosef, family = binomial(link="logit"), id = id, corstr="exchangeable", data = EG_data)
 summary(geefitexch2)
 QIC(geefitexch2)
-```
 
-```{r}
 # Full likelihood with continuous variable
 library(aod)
 bbfit1 = betabin(cbind(normal, size - normal) ~ dose, ~1, data = EG)
@@ -132,18 +116,15 @@ summary(bbfit1)
 -2*logLik(bbfit1)
 AIC(bbfit1)
 BIC(bbfit1)
-```
 
-```{r}
 # Full likelihood with factor variable
 bbfit2 = betabin(cbind(normal, size - normal) ~ dosef, ~1, data = EG)
 summary(bbfit2)
 -2*logLik(bbfit2)
 AIC(bbfit2)
 BIC(bbfit2)
-```
 
-```{r}
+
 # Full likelihood
 #library(gamlss)
 #bbfitn = gamlss(cbind(normal, size - normal) ~ dose, sigma.formula=~1, family=BB, data = EG)
@@ -153,10 +134,10 @@ BIC(bbfit2)
 #logsigmahat = bbfitn$sigma.coefficients
 #rhohat = exp(logsigmahat)/(exp(logsigmahat) + 1)
 #rhohat
-```
 
 
-```{r}
+
+
 # Random effects model
 #logistic-normal model
 library(lme4)
@@ -182,84 +163,165 @@ glmer1 <- glmer(cbind(normal, size - normal) ~ dose + (1|id), family = binomial(
 summary(glmer1)
 glmer2 <- glmer(cbind(normal, size - normal) ~ dose + (1|id), family = binomial(link="logit"), nAGQ = 100, data = EG)
 summary(glmer2)
-```
+
 
 # Question 2
 ## Unclustered 
 
 ## Baseline Model
 
-```{r}
 library(VGAM)
 EG_Base=vglm(cbind(normal,malformed,dead)~1,multinomial(refLevel=1),EG)
 summary(EG_Base)
-```
+
 ## Likelihood ratio test
-```{r}
+
 LRT_Base=2*(logLik(EG_Base))
 c(LRT_Base,1-pchisq(LRT_Base,3))
-```
 
 ### AIC and BIC
 
-```{r}
+
 AIC_Base<-AIC(EG_Base)
 AIC_Base
-```
 
-```{r}
 BIC_Base<-BIC(EG_Base)
 BIC_Base
-```
+
 
 
 ## Adjacent Model
 
 ### No Common slopes
-```{r}
+
 adj_EG1=vglm(cbind(normal,malformed,dead)~dose,acat,EG)
 summary(adj_EG1)
-```
+
 ### Likelihood Ratio Test
 
-```{r}
+
 LRT_Adj=LRT_Adj=2*(logLik(adj_EG1))
 c(LRT_Adj,1-pchisq(LRT_Adj,3))
-```
+
 ### AIC and BIC
 
-```{r}
+
 AIC_Adj_noCS<-AIC(adj_EG1)
 AIC_Adj_noCS
-```
-```{r}
+
+
 BIC_Adj_noCS<-BIC(adj_EG1)
 BIC_Adj_noCS
-```
+
 
 
 ### Common slopes
-```{r}
+
 adj_EG1_CS=vglm(cbind(normal,malformed,dead)~dose,acat(parallel=TRUE),EG)
 summary(adj_EG1_CS)
-```
+
 ### Likelihood Ratio Test with CS
 
-```{r}
 LRT_Adj_CS=LRT_Adj_CS=2*(logLik(adj_EG1_CS))
 c(LRT_Adj_CS,1-pchisq(LRT_Adj_CS,3))
-```
+
 
 ### AIC and BIC
 
-```{r}
+
 AIC_Adj_CS<-AIC(adj_EG1_CS)
 AIC_Adj_CS
-```
 
-```{r}
+
+
 BIC_Adj_CS<-BIC(adj_EG1_CS)
 BIC_Adj_CS
-```
+
+
+# Continuation ratio model
+#install.packages("VGAM")
+library(VGAM)
+# with common slope
+  fit1 = vglm(cbind(normal, malformed, dead)~dose, cratio(parallel = TRUE), EG)
+  summary(fit1)
+  summary(resid(fit1, type = "pearson"))
+# Loglikelihood
+  -2*logLik(fit1)
+# Model fit statistics
+  AIC(fit1)
+  BIC(fit1)
+# Score and Wald test
+  score.stat(fit1)
+  wald.stat(fit1)
+#with different slope
+  fit1.2 = vglm(cbind(normal, malformed, dead)~dose, cratio(parallel = FALSE), EG)
+  summary(fit1.2)
+  summary(resid(fit1.2, type = "pearson"))
+  # Loglikelihood
+  -2*logLik(fit1.2)
+  # Model fit statistics
+  AIC(fit1.2)
+  BIC(fit1.2)
+  # Score and Wald test
+  score.stat(fit1.2)
+  wald.stat(fit1.2)
+  
+  
+# proportional odd model
+  fit2 = vglm(cbind(normal, malformed, dead)~dose, propodds(reverse = F), EG)
+  summary(fit2)
+
+# Loglikelihood
+  -2*logLik(fit2)
+
+# Model fit statistics
+  AIC(fit2)
+  BIC(fit2)
+# Score and Wald test
+  score.stat(fit2)
+  wald.stat(fit2)  
+
+
+# Ordered Multivariate GEE
+
+## with multgee
+library(multgee)
+
+#fit the Multivariate extension of GEE with independence working assumption --> not clustering then 
+PO.gee.ind <- ordLORgee(response ~ dose, data = EG_data, id = id, LORstr = 'independence', link = 'logit')
+summary(PO.gee.ind) 
+
+#Fit the MUltivariate extension of the GEE with the exchangable working assumption --> all littermates with the same correlation: why should it be different?
+PO.gee.unif <- ordLORgee((response) ~ dose, data = EG_data, id = id, LORstr = 'uniform', link = 'logit') #dose is not as.factor sicne we are working with PO assumption. With QIC we should check but idk how to do QIC
+summary(PO.gee.unif)
+
+
+##QIC tets for GEE --> different objects needed 
+library(MuMIn)
+QIC(PO.gee.unif) #QIC based on independence assumption comaprison --> a fitted model object of class "gee", "geepack", "geem", "wgee", or "yags".
+library(wgeesel)
+QIC.gee(PO.gee.unif) #no., it needs a wgee model 
+
+
+## with geepack --> different resutls? --> DO NOT USE GEEPACK 
+library(geepack)
+# Independence working assumption
+model_ind <- ordgee(ordered(response) ~ dose, data = EG_data, mean.link = 'logit', id = id, corstr = "independence")
+summary(model_ind)
+# Echangeable working assumption 
+model_exch <- ordgee(ordered(response) ~ dose, data = EG_data, mean.link = 'logit', id = id, corstr = "exchangeable")
+summary(model_exch) #if dose put as factor then NaN in the analysis --> too much complicated variance structure??
+
+
+# Ordered Multivariate GLMM 
+
+## 'No linear' dose effect 
+EG_GLMM <- clmm(ordered(response) ~ as.factor(dose) + (1|id), link = 'logit', data = EG_data)
+summary(EG_GLMM)
+
+## 'Linear' dose effect 
+Equ_GLMM <- clmm(ordered(response) ~ dose + (1|id), data = EG_data, link = 'logit')
+summary(Equ_GLMM)
+
 
 
