@@ -292,8 +292,12 @@ PO.gee.ind <- ordLORgee(response ~ dose, data = EG_data, id = id, LORstr = 'inde
 summary(PO.gee.ind) 
 
 #Fit the MUltivariate extension of the GEE with the exchangable working assumption --> all littermates with the same correlation: why should it be different?
-PO.gee.unif <- ordLORgee((response) ~ dose, data = EG_data, id = id, LORstr = 'uniform', link = 'logit') #dose is not as.factor sicne we are working with PO assumption. With QIC we should check but idk how to do QIC
-summary(PO.gee.unif)
+PO.gee.unif.lin <- ordLORgee((response) ~ dose, data = EG_data, id = id, LORstr = 'uniform', link = 'logit') #dose is not as.factor sicne we are working with PO assumption. With QIC we should check but idk how to do QIC
+summary(PO.gee.unif.lin)
+
+#Fit the MUltivariate extension of the GEE with the exchangable working assumption --> all littermates with the same correlation: why should it be different?
+PO.gee.unif.fact <- ordLORgee((response) ~ as.factor(dose), data = EG_data, id = id, LORstr = 'uniform', link = 'logit') #dose is not as.factor sicne we are working with PO assumption. With QIC we should check but idk how to do QIC
+summary(PO.gee.unif.fact)
 
 
 ##QIC tets for GEE --> different objects needed 
