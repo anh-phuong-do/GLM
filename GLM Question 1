@@ -67,7 +67,6 @@ BIC(mfit3)
 
 ## Clustered 
 
-
 # Quasi-likelihood with inflated binomial inflation with dose as continuous variable
 EG$dose <- as.numeric(EG$dose)
 mfitq1 <- glm(formula = cbind(normal, size - normal) ~ dose, family = quasibinomial(link = "logit"), data = EG)
@@ -87,6 +86,11 @@ summary(mfitq3)
 # Quasi-likelihood with beta-binomial type variance  with dose as factor variable
 mfitq4 <- glm(formula = outcome ~ dosef, family = quasi(link = "logit", variance = "mu(1-mu)"), data = EG_data)
 summary(mfitq4)
+
+# Quasi-likelihood with beta-binomial variance (williams) done in SAS
+PROC LOGISTIC data=EG;
+MODEL normal/size= dose/ SCALE=williams;
+RUN;
 
 
 # Generalized estimating equations 
